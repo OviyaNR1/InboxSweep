@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, LogOut, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
+import Dashboard from "../components/Dashboard";
 import { useAuth } from "../store/auth";
 import {
   beginSignIn,
@@ -63,7 +64,7 @@ export default function AppPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-20">
+      <main className="mx-auto max-w-6xl px-6 py-10">
         {booting || status === "authenticating" ? (
           <Centered>
             <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
@@ -91,7 +92,7 @@ export default function AppPage() {
             </button>
           </Centered>
         ) : isAuthed ? (
-          <SignedIn email={user?.email} />
+          <Dashboard />
         ) : (
           <Centered>
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-600/10">
@@ -113,27 +114,6 @@ export default function AppPage() {
         )}
       </main>
     </div>
-  );
-}
-
-function SignedIn({ email }: { email?: string }) {
-  return (
-    <Centered>
-      <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-        <ShieldCheck className="h-7 w-7" />
-      </span>
-      <h1 className="mt-6 text-2xl font-bold">You're connected 🎉</h1>
-      <p className="mt-3 max-w-md text-slate-600 dark:text-slate-300">
-        {email ? (
-          <>
-            Signed in as <span className="font-medium">{email}</span>. The storage
-            dashboard scans your mailbox in the next milestone.
-          </>
-        ) : (
-          "Signed in. The storage dashboard scans your mailbox in the next milestone."
-        )}
-      </p>
-    </Centered>
   );
 }
 
