@@ -10,13 +10,14 @@ import {
 } from "lucide-react";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
+import { beginSignIn } from "../hooks/useAuth";
 
-// NOTE: Real Google sign-in is wired up in Milestone 2 (GIS + PKCE). For now
-// the "Connect Gmail" button routes to the app shell so the flow is reviewable.
+// Starts the real Google OAuth (Authorization Code + PKCE) flow.
 function ConnectButton({ className = "" }: { className?: string }) {
   return (
-    <Link
-      to="/app"
+    <button
+      type="button"
+      onClick={() => beginSignIn()}
       className={
         "inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-500 " +
         className
@@ -46,7 +47,7 @@ function ConnectButton({ className = "" }: { className?: string }) {
       </svg>
       Connect Gmail
       <ArrowRight className="h-4 w-4" />
-    </Link>
+    </button>
   );
 }
 

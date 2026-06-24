@@ -2,7 +2,28 @@
 
 Free up your Gmail storage. Find what's eating space, bulk-delete safely (Trash by default), empty large attachments, and unsubscribe from senders — all from a clean web app, no code required.
 
-> **Status:** Milestone 1 of 7 complete — project scaffold, landing page, theming, and Netlify config. Sign-in and the dashboard arrive in later milestones.
+> **Status:** Milestones 1–2 of 7 complete — scaffold + landing page, and Google sign-in (OAuth Authorization Code + PKCE) with serverless token exchange/refresh/revoke. The storage dashboard arrives next.
+
+## Set up Google sign-in (required for Milestone 2+)
+
+You only do this once. It gives you the `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` the app needs.
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) and create a project (e.g. "InboxSweep").
+2. **APIs & Services → Library →** search **Gmail API →** Enable.
+3. **APIs & Services → OAuth consent screen:**
+   - User type: **External**.
+   - Fill in app name, your support email, developer email.
+   - **Scopes:** add `.../auth/gmail.modify` (and `openid`, `email`, `profile`).
+   - **Test users:** add your own Gmail address (and up to 100 others). Until Google verifies the app, only test users can sign in.
+4. **APIs & Services → Credentials → Create credentials → OAuth client ID:**
+   - Application type: **Web application**.
+   - **Authorized redirect URIs:** add both
+     - `http://localhost:8888/app` (local dev)
+     - `https://<your-site>.netlify.app/app` (production)
+   - Create, then copy the **Client ID** and **Client secret**.
+5. Put those values in your env vars (below). Set `OAUTH_REDIRECT_URI` / `VITE_OAUTH_REDIRECT_URI` to the **exact** redirect URI for that environment.
+
+> **Restricted scopes / verification:** `gmail.modify` is a *restricted* scope. The app works immediately for you and your test users. Public launch requires Google's OAuth verification and possibly a paid annual CASA security assessment.
 
 ## Architecture (why it's built this way)
 
@@ -71,7 +92,7 @@ Copy `.env.example` to `.env` and fill in the values (full Google Cloud setup st
 ## Roadmap
 
 1. ✅ Scaffold + landing + Netlify config
-2. OAuth (GIS + PKCE) + auth functions
+2. ✅ OAuth (GIS + PKCE) + auth functions
 3. Gmail client (search, metadata, batching, backoff)
 4. Storage scan + dashboard
 5. Cleanup recipes + bulk trash + undo

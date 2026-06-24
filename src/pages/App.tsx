@@ -1,37 +1,142 @@
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Construction, ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogOut, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
+import { useAuth } from "../store/auth";
+import {
+  beginSignIn,
+  completeSignInFromRedirect,
+  refreshAccessToken,
+  disconnect,
+} from "../hooks/useAuth";
 
-// Placeholder app shell. Milestone 2 adds real Google sign-in; Milestone 4
-// replaces this body with the storage dashboard.
 export default function AppPage() {
+  const { status, user, error, accessToken } = useAuth();
+  const [booting, setBooting] = useState(true);
+
+  // On first load: finish a sign-in redirect if we just came back from Google,
+  // otherwise try to silently restore a session from the refresh cookie.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const completed = await completeSignInFromRedirect();
+      if (!completed && active) {
+        await refreshAccessToken(); // no-op if there's no valid refresh cookie
+      }
+      if (active) setBooting(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const isAuthed = !!accessToken;
+
   return (
     <div className="min-h-full">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Logo />
         <div className="flex items-center gap-3">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" /> Home
-          </Link>
+          {isAuthed && user?.email && (
+            <span className="hidden text-sm text-slate-500 dark:text-slate-400 sm:inline">
+              {user.email}
+            </span>
+          )}
+          {isAuthed ? (
+            <button
+              type="button"
+              onClick={() => disconnect()}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <LogOut className="h-4 w-4" /> Disconnect
+            </button>
+          ) : (
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" /> Home
+            </Link>
+          )}
           <ThemeToggle />
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-3xl flex-col items-center px-6 py-24 text-center">
-        <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
-          <Construction className="h-7 w-7" />
-        </span>
-        <h1 className="mt-6 text-2xl font-bold">App shell ready</h1>
-        <p className="mt-3 max-w-md text-slate-600 dark:text-slate-300">
-          Google sign-in and the storage dashboard land in the next milestones.
-          This screen confirms routing, theming, and the build pipeline work
-          end-to-end.
-        </p>
+      <main className="mx-auto max-w-3xl px-6 py-20">
+        {booting || status === "authenticating" ? (
+          <Centered>
+            <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+            <p className="mt-4 text-slate-600 dark:text-slate-300">
+              {status === "authenticating"
+                ? "Finishing sign-in…"
+                : "Checking your session…"}
+            </p>
+          </Centered>
+        ) : status === "error" ? (
+          <Centered>
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400">
+              <AlertCircle className="h-7 w-7" />
+            </span>
+            <h1 className="mt-6 text-2xl font-bold">Sign-in didn't complete</h1>
+            <p className="mt-3 max-w-md text-slate-600 dark:text-slate-300">
+              {error ?? "Something went wrong."}
+            </p>
+            <button
+              type="button"
+              onClick={() => beginSignIn()}
+              className="mt-6 rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white hover:bg-brand-700"
+            >
+              Try again
+            </button>
+          </Centered>
+        ) : isAuthed ? (
+          <SignedIn email={user?.email} />
+        ) : (
+          <Centered>
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-600/10">
+              <ShieldCheck className="h-7 w-7" />
+            </span>
+            <h1 className="mt-6 text-2xl font-bold">Connect your Gmail to begin</h1>
+            <p className="mt-3 max-w-md text-slate-600 dark:text-slate-300">
+              We'll ask Google for permission to find and clean up mail. Your
+              email is processed in your browser and never stored.
+            </p>
+            <button
+              type="button"
+              onClick={() => beginSignIn()}
+              className="mt-6 rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white hover:bg-brand-700"
+            >
+              Connect Gmail
+            </button>
+          </Centered>
+        )}
       </main>
     </div>
   );
+}
+
+function SignedIn({ email }: { email?: string }) {
+  return (
+    <Centered>
+      <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+        <ShieldCheck className="h-7 w-7" />
+      </span>
+      <h1 className="mt-6 text-2xl font-bold">You're connected 🎉</h1>
+      <p className="mt-3 max-w-md text-slate-600 dark:text-slate-300">
+        {email ? (
+          <>
+            Signed in as <span className="font-medium">{email}</span>. The storage
+            dashboard scans your mailbox in the next milestone.
+          </>
+        ) : (
+          "Signed in. The storage dashboard scans your mailbox in the next milestone."
+        )}
+      </p>
+    </Centered>
+  );
+}
+
+function Centered({ children }: { children: ReactNode }) {
+  return <div className="flex flex-col items-center text-center">{children}</div>;
 }
