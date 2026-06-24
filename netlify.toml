@@ -1,0 +1,18 @@
+# Netlify configuration for InboxSweep.
+# Frontend builds to /dist (static). Serverless functions live in netlify/functions.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  # Node 20 runtime for all functions.
+  node_bundler = "esbuild"
+
+[[redirects]]
+  # SPA fallback: every non-file, non-function route serves index.html so
+  # client-side routing (/app, /privacy) works on refresh and deep links.
+  from = "/*"
+  to = "/index.html"
+  status = 200
