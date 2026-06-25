@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { MessageMeta } from "../lib/gmailClient";
-import type { ScanAggregates } from "../lib/sizeEstimator";
+import { aggregate, type ScanAggregates } from "../lib/sizeEstimator";
 
 export type ScanStatus =
   | "idle"
@@ -25,6 +25,8 @@ interface ScanState {
   setTotals: (total: number, cap: number, query: string) => void;
   setProgress: (scanned: number) => void;
   setResult: (messages: MessageMeta[], aggregates: ScanAggregates) => void;
+  /** Drop messages that were trashed/deleted and re-aggregate the dashboard. */
+  removeMessages: (ids: string[]) => void;
 }
 
 export const useScanStore = create<ScanState>((set) => ({
@@ -53,4 +55,15 @@ export const useScanStore = create<ScanState>((set) => ({
   setProgress: (scanned) => set({ scanned }),
   setResult: (messages, aggregates) =>
     set({ messages, aggregates, status: "done" }),
+
+  removeMessages: (ids) =>
+    set((prev) => {
+      if (!prev.messages.length) return prev;
+      const drop = new Set(ids);
+      const remaining = prev.messages.filter((m) => !drop.has(m.id));
+      return {
+        messages: remaining,
+        aggregates: aggregate(remaining),
+      };
+    }),
 }));

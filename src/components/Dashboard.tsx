@@ -9,11 +9,16 @@ import {
 } from "lucide-react";
 import { useScan } from "../hooks/useScan";
 import { formatBytes } from "../lib/sizeEstimator";
+import { senderQuery, type CleanupRecipe } from "../lib/queries";
 import { Card, StatCard } from "./Card";
 import ProgressBar from "./ProgressBar";
 import SenderTable from "./SenderTable";
 import CategoryBreakdown from "./CategoryBreakdown";
 import LargestEmails from "./LargestEmails";
+import CleanupRecipes from "./CleanupRecipes";
+import SearchBar from "./SearchBar";
+import ReviewModal, { type ReviewResult } from "./ReviewModal";
+import UndoBanner from "./UndoBanner";
 
 const DEPTHS = [
   { label: "Quick", cap: 1000, hint: "~1 min" },
@@ -24,8 +29,22 @@ const DEPTHS = [
 export default function Dashboard() {
   const scan = useScan();
   const [depth, setDepth] = useState(1); // default Standard
+  const [review, setReview] = useState<{ title: string; query: string } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const denom = Math.min(scan.cap || 1, scan.total || scan.cap || 1);
+
+  // Close the review modal; surface a notice if anything failed.
+  function onReviewClose(result?: ReviewResult) {
+    setReview(null);
+    if (!result) return;
+    if (result.error) setNotice(result.error);
+    else if (result.failed > 0)
+      setNotice(
+        `${result.succeeded.toLocaleString()} done, ${result.failed.toLocaleString()} couldn't be processed — try again.`
+      );
+    if (result.error || result.failed > 0) setTimeout(() => setNotice(null), 7000);
+  }
 
   // ── Idle: prompt to scan ────────────────────────────────────────────────
   if (scan.status === "idle") {
@@ -150,6 +169,17 @@ export default function Dashboard() {
         </button>
       </div>
 
+      <SearchBar
+        onSearch={(query) => setReview({ title: `Search: ${query}`, query })}
+      />
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">One-click cleanups</h2>
+        <CleanupRecipes
+          onRun={(r: CleanupRecipe) => setReview({ title: r.title, query: r.query })}
+        />
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           label="Scanned size (est.)"
@@ -166,7 +196,15 @@ export default function Dashboard() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card title="Top senders by storage" className="lg:col-span-2">
-          <SenderTable senders={agg.senders} />
+          <SenderTable
+            senders={agg.senders}
+            onReview={(s) =>
+              setReview({
+                title: `${s.name || s.email}`,
+                query: senderQuery(s.email || s.name),
+              })
+            }
+          />
         </Card>
 
         <div className="space-y-6">
@@ -195,6 +233,22 @@ export default function Dashboard() {
       <Card title="Largest emails">
         <LargestEmails messages={agg.largest} limit={10} />
       </Card>
+
+      {/* Review/bulk-action modal, undo toast, and error notice */}
+      <ReviewModal
+        open={!!review}
+        title={review?.title ?? ""}
+        query={review?.query ?? ""}
+        onClose={onReviewClose}
+      />
+      <UndoBanner />
+      {notice && (
+        <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-lg dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+            {notice}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
