@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Wand2, Loader2, Check, FolderTree } from "lucide-react";
+import { Wand2, Loader2, Check, FolderTree, FileText } from "lucide-react";
 import { useDriveStore } from "../store/drive";
 import { getRootId, createFolder, moveFile } from "../lib/driveClient";
 import { buildPlan } from "../lib/organize";
@@ -13,6 +13,7 @@ import ProgressBar from "./ProgressBar";
  */
 export default function OrganizePanel({ onDone }: { onDone: () => void }) {
   const folders = useDriveStore((s) => s.folders);
+  const files = useDriveStore((s) => s.files);
   const [rootId, setRootId] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(0);
@@ -23,8 +24,8 @@ export default function OrganizePanel({ onDone }: { onDone: () => void }) {
   }, []);
 
   const plan = useMemo(
-    () => (rootId ? buildPlan(folders, rootId) : null),
-    [folders, rootId]
+    () => (rootId ? buildPlan(folders, files, rootId) : null),
+    [folders, files, rootId]
   );
 
   async function execute() {
@@ -53,9 +54,10 @@ export default function OrganizePanel({ onDone }: { onDone: () => void }) {
           continue;
         }
       }
-      for (const f of group.folders) {
+      // Move matching folders, then loose files, into the category folder.
+      for (const item of [...group.folders, ...group.files]) {
         try {
-          await moveFile(f.id, catId, f.parents);
+          await moveFile(item.id, catId, item.parents);
           moved++;
         } catch {
           failed++;
@@ -104,7 +106,7 @@ export default function OrganizePanel({ onDone }: { onDone: () => void }) {
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
           >
             {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-            {running ? "Organizing…" : `Organize ${plan.movesCount} folders`}
+            {running ? "Organizing…" : `Organize ${plan.movesCount} items`}
           </button>
         )
       }
@@ -126,12 +128,20 @@ export default function OrganizePanel({ onDone }: { onDone: () => void }) {
             <div className="mb-2 flex items-center gap-2 font-medium">
               <span>{g.category.emoji}</span>
               {g.category.label}
-              <span className="text-xs font-normal text-slate-400">{g.folders.length}</span>
+              <span className="text-xs font-normal text-slate-400">
+                {g.folders.length + g.files.length}
+              </span>
             </div>
             <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
               {g.folders.map((f) => (
                 <li key={f.id} className="flex items-center gap-1.5 truncate">
                   <FolderTree className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <span className="truncate">{f.name}</span>
+                </li>
+              ))}
+              {g.files.map((f) => (
+                <li key={f.id} className="flex items-center gap-1.5 truncate text-slate-500">
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                   <span className="truncate">{f.name}</span>
                 </li>
               ))}

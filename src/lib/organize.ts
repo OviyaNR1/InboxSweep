@@ -3,7 +3,7 @@
 // keyword. Conservative by design: anything it can't confidently place is left
 // alone rather than moved somewhere wrong.
 
-import type { DriveFolder } from "./driveClient";
+import type { DriveFolder, DriveFile } from "./driveClient";
 
 export interface Category {
   key: string;
@@ -43,38 +43,65 @@ export function categorizeFolder(name: string): string | null {
   return null;
 }
 
+/** Categorize a loose file by type + filename. Photos/videos go to Photos. */
+export function categorizeFile(name: string, mimeType: string): string | null {
+  if (mimeType.startsWith("image/") || mimeType.startsWith("video/")) return "photos";
+  const n = name.trim().toLowerCase();
+  for (const rule of RULES) {
+    if (rule.keywords.some((k) => n.includes(k))) return rule.key;
+  }
+  return null; // leave anything we can't confidently place
+}
+
 export interface OrganizePlan {
-  groups: Array<{ category: Category; folders: DriveFolder[] }>;
+  groups: Array<{ category: Category; folders: DriveFolder[]; files: DriveFile[] }>;
   movesCount: number;
   skipped: number;
 }
 
 /**
- * Build a move plan from the user's folders. Only top-level folders (directly
- * under My Drive root) are considered, so nested structures stay intact.
+ * Build a move plan from the user's top-level folders AND loose files sitting
+ * directly in My Drive root. Nested folders and files already inside folders
+ * are left untouched.
  */
-export function buildPlan(folders: DriveFolder[], rootId: string): OrganizePlan {
-  const byKey = new Map<string, DriveFolder[]>();
+export function buildPlan(
+  folders: DriveFolder[],
+  files: DriveFile[],
+  rootId: string
+): OrganizePlan {
+  const folderByKey = new Map<string, DriveFolder[]>();
+  const fileByKey = new Map<string, DriveFile[]>();
   let skipped = 0;
 
+  const atRoot = (parents: string[]) =>
+    parents.includes(rootId) || parents.includes("root");
+
   for (const f of folders) {
-    const atRoot = f.parents.includes(rootId) || f.parents.includes("root");
-    if (!atRoot) continue; // leave nested folders where they are
+    if (!atRoot(f.parents)) continue;
     const key = categorizeFolder(f.name);
     if (!key) {
       skipped++;
       continue;
     }
-    const arr = byKey.get(key) ?? [];
-    arr.push(f);
-    byKey.set(key, arr);
+    (folderByKey.get(key) ?? folderByKey.set(key, []).get(key)!).push(f);
+  }
+
+  for (const file of files) {
+    if (!atRoot(file.parents)) continue; // only loose root files
+    const key = categorizeFile(file.name, file.mimeType);
+    if (!key) {
+      skipped++;
+      continue;
+    }
+    (fileByKey.get(key) ?? fileByKey.set(key, []).get(key)!).push(file);
   }
 
   const groups = CATEGORIES.map((category) => ({
     category,
-    folders: byKey.get(category.key) ?? [],
-  })).filter((g) => g.folders.length > 0);
+    folders: folderByKey.get(category.key) ?? [],
+    files: fileByKey.get(category.key) ?? [],
+  })).filter((g) => g.folders.length > 0 || g.files.length > 0);
 
-  const movesCount = groups.reduce((s, g) => s + g.folders.length, 0);
+  const movesCount = groups.reduce((s, g) => s + g.folders.length + g.files.length, 0);
   return { groups, movesCount, skipped };
 }
