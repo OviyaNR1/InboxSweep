@@ -168,17 +168,7 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <SearchBar
-        onSearch={(query) => setReview({ title: `Search: ${query}`, query })}
-      />
-
-      <div>
-        <h2 className="mb-3 text-lg font-semibold">One-click cleanups</h2>
-        <CleanupRecipes
-          onRun={(r: CleanupRecipe) => setReview({ title: r.title, query: r.query })}
-        />
-      </div>
-
+      {/* 1 — Overview: where you stand */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           accent="brand"
@@ -200,6 +190,18 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* 2 — Quick actions: one-click recipes */}
+      <div>
+        <h2 className="mb-1 text-lg font-bold">Clean up fast</h2>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          One-click sweeps. Pick one to review before anything is deleted.
+        </p>
+        <CleanupRecipes
+          onRun={(r: CleanupRecipe) => setReview({ title: r.title, query: r.query })}
+        />
+      </div>
+
+      {/* 3 — Details: the breakdown */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card title="Top senders by storage" className="lg:col-span-2">
           <SenderTable
@@ -238,6 +240,13 @@ export default function Dashboard() {
 
       <Card title="Largest emails">
         <LargestEmails messages={agg.largest} limit={10} />
+      </Card>
+
+      {/* 4 — Power tool: free-text search */}
+      <Card title="Search your mail">
+        <SearchBar
+          onSearch={(query) => setReview({ title: `Search: ${query}`, query })}
+        />
       </Card>
 
       {/* Review/bulk-action modal, undo toast, and error notice */}
