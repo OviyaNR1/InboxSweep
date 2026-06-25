@@ -25,6 +25,8 @@ export default function UnsubscribeCenter() {
   const { aggregates, status } = useScanStore();
   const batch = useBatchAction();
   const [rowStatus, setRowStatus] = useState<Record<string, RowStatus>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   // Only senders that actually carry an unsubscribe header.
   const subs = useMemo(
@@ -95,6 +97,62 @@ export default function UnsubscribeCenter() {
     if (ids.length) await batch.run("trash", ids);
   }
 
+  const keyOf = (s: SenderAgg) => s.email || s.name;
+  const allSelected = subs.length > 0 && selected.size === subs.length;
+
+  function toggle(key: string) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      n.has(key) ? n.delete(key) : n.add(key);
+      return n;
+    });
+  }
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(subs.map(keyOf)));
+  }
+
+  /**
+   * Bulk action over the selected senders. `mode`:
+   *  - "unsub":  one-click unsubscribe each (manual-only senders are flagged)
+   *  - "delete": trash all their mail in one combined batch
+   *  - "both":   unsubscribe + trash
+   */
+  async function bulkAction(mode: "unsub" | "delete" | "both") {
+    const chosen = subs.filter((s) => selected.has(keyOf(s)));
+    if (chosen.length === 0) return;
+    setBulkBusy(true);
+    try {
+      if (mode === "unsub" || mode === "both") {
+        for (const s of chosen) {
+          const t = parseUnsubscribe(s.listUnsubscribe, s.listUnsubscribePost);
+          if (unsubMethod(t) === "one-click" && t.httpsUrl) {
+            setStatus(keyOf(s), "working");
+            const ok = await oneClickUnsubscribe(t.httpsUrl);
+            setStatus(keyOf(s), ok ? "done" : "failed");
+          } else {
+            // Can't bulk-open dozens of tabs; flag for individual action.
+            setStatus(keyOf(s), "opened");
+          }
+        }
+      }
+      if (mode === "delete" || mode === "both") {
+        const ids: string[] = [];
+        for (const s of chosen) {
+          let token: string | undefined;
+          do {
+            const page = await listMessageIds(senderQuery(keyOf(s)), token, 500);
+            ids.push(...page.ids);
+            token = page.nextPageToken;
+          } while (token && ids.length < 8000);
+        }
+        if (ids.length) await batch.run("trash", ids.slice(0, 8000));
+      }
+      setSelected(new Set());
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -103,6 +161,47 @@ export default function UnsubscribeCenter() {
           {subs.length} sender{subs.length === 1 ? "" : "s"} from the last scan offer an
           unsubscribe link.
         </p>
+      </div>
+
+      {/* Bulk toolbar — select all + act on many at once */}
+      <div className="card-surface flex flex-wrap items-center justify-between gap-3 p-3">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={toggleAll}
+            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
+          {selected.size > 0 ? `${selected.size} selected` : "Select all"}
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={selected.size === 0 || bulkBusy}
+            onClick={() => bulkAction("unsub")}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MailMinus className="h-4 w-4" />}
+            Unsubscribe
+          </button>
+          <button
+            type="button"
+            disabled={selected.size === 0 || bulkBusy}
+            onClick={() => bulkAction("delete")}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <Trash2 className="h-4 w-4" /> Delete all
+          </button>
+          <button
+            type="button"
+            disabled={selected.size === 0 || bulkBusy}
+            onClick={() => bulkAction("both")}
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-brand-600 to-grape-600 px-4 py-1.5 text-sm font-semibold text-white shadow-soft hover:brightness-105 disabled:opacity-40"
+          >
+            {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            Unsubscribe + Delete
+          </button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -119,7 +218,14 @@ export default function UnsubscribeCenter() {
                 key={key}
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-start gap-3 sm:items-center">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(key)}
+                    onChange={() => toggle(key)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500 sm:mt-0"
+                  />
+                  <div className="min-w-0">
                   <div className="truncate font-medium text-slate-900 dark:text-white">
                     {s.name || s.email}
                   </div>
@@ -127,7 +233,8 @@ export default function UnsubscribeCenter() {
                     {s.email} · {s.count} email{s.count === 1 ? "" : "s"} ·{" "}
                     {formatBytes(s.bytes)}
                   </div>
-                  <MethodNote method={method} status={st} />
+                    <MethodNote method={method} status={st} />
+                  </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">

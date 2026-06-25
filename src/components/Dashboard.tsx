@@ -16,6 +16,7 @@ import SenderTable from "./SenderTable";
 import CategoryBreakdown from "./CategoryBreakdown";
 import LargestEmails from "./LargestEmails";
 import CleanupRecipes from "./CleanupRecipes";
+import EmptyTrashCard from "./EmptyTrashCard";
 import SearchBar from "./SearchBar";
 import ReviewModal, { type ReviewResult } from "./ReviewModal";
 
@@ -189,6 +190,9 @@ export default function Dashboard() {
           sub={`${agg.ageBuckets[0].count.toLocaleString()} emails`}
         />
       </div>
+
+      {/* Reclaim space immediately */}
+      <EmptyTrashCard />
 
       {/* 2 — Quick actions: one-click recipes */}
       <div>

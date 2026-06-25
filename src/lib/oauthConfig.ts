@@ -13,7 +13,10 @@ export const SCOPES = [
   "openid",
   "email",
   "profile",
-  "https://www.googleapis.com/auth/gmail.modify",
+  // Full Gmail scope — needed to PERMANENTLY delete messages (empty Trash /
+  // "delete forever") which is what actually reclaims storage. Supersedes
+  // gmail.modify (read/trash/label).
+  "https://mail.google.com/",
   // Drive scope: needed to move files between folders and trash them.
   "https://www.googleapis.com/auth/drive",
 ].join(" ");

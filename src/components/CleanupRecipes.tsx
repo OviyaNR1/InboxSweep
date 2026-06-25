@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Sparkles, ChevronRight, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Trash2, Eye } from "lucide-react";
 import { RECIPES, type CleanupRecipe } from "../lib/queries";
-import { countMessages } from "../lib/gmailClient";
+import { countMessages, listMessageIds } from "../lib/gmailClient";
 import { mapLimit } from "../lib/backoff";
+import { useBatchAction } from "../hooks/useBatchAction";
+
+const ACT_CAP = 8000; // safety ceiling for one-click "Trash all"
 
 const TONE_RING: Record<CleanupRecipe["tone"], string> = {
   promo: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
@@ -22,6 +25,8 @@ export default function CleanupRecipes({
   onRun: (recipe: CleanupRecipe) => void;
 }) {
   const [counts, setCounts] = useState<Record<string, number | null>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const batch = useBatchAction();
 
   useEffect(() => {
     let active = true;
@@ -37,6 +42,25 @@ export default function CleanupRecipes({
       active = false;
     };
   }, []);
+
+  /** One-click: move every matching message to Trash (reversible via Undo). */
+  async function trashAll(r: CleanupRecipe) {
+    setBusyId(r.id);
+    try {
+      const ids: string[] = [];
+      let token: string | undefined;
+      do {
+        const page = await listMessageIds(r.query, token, 500);
+        ids.push(...page.ids);
+        token = page.nextPageToken;
+      } while (token && ids.length < ACT_CAP);
+      if (ids.length) await batch.run("trash", ids.slice(0, ACT_CAP));
+      // Cleared — hide this recipe.
+      setCounts((c) => ({ ...c, [r.id]: 0 }));
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   // Hide recipes with nothing to clean once their count has loaded, so the
   // grid only shows actionable sweeps instead of dead "Nothing to clean" cards.
@@ -60,12 +84,12 @@ export default function CleanupRecipes({
       {visible.map((r) => {
         const count = counts[r.id];
         const loaded = count !== undefined;
+        const busy = busyId === r.id || (batch.running && busyId === r.id);
+        const anyBusy = busyId !== null;
         return (
-          <button
+          <div
             key={r.id}
-            type="button"
-            onClick={() => onRun(r)}
-            className="card-surface group flex flex-col p-4 text-left transition hover:-translate-y-0.5 hover:shadow-soft"
+            className="card-surface flex flex-col p-4 text-left transition hover:-translate-y-0.5 hover:shadow-soft"
           >
             <div className="flex items-start justify-between gap-2">
               <span
@@ -92,10 +116,31 @@ export default function CleanupRecipes({
             <p className="mt-1 flex-1 text-xs text-slate-500 dark:text-slate-400">
               {r.description}
             </p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition group-hover:gap-2">
-              Review &amp; clean <ChevronRight className="h-4 w-4" />
-            </span>
-          </button>
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => trashAll(r)}
+                disabled={anyBusy}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-brand-600 to-grape-600 px-3 py-2 text-sm font-semibold text-white shadow-soft transition hover:brightness-105 disabled:opacity-50"
+              >
+                {busy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                Trash all
+              </button>
+              <button
+                type="button"
+                onClick={() => onRun(r)}
+                disabled={anyBusy}
+                title="Review first"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-white disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <Eye className="h-4 w-4" /> Review
+              </button>
+            </div>
+          </div>
         );
       })}
     </div>

@@ -200,3 +200,35 @@ export async function batchDelete(ids: string[]): Promise<void> {
     body: JSON.stringify({ ids }),
   });
 }
+
+/** Number of messages currently in Trash. */
+export async function getTrashCount(): Promise<number> {
+  return countMessages("in:trash");
+}
+
+/**
+ * Empty Gmail Trash by permanently deleting everything in it — THIS is what
+ * actually frees storage. Lists all trashed IDs then batchDeletes in chunks.
+ * Requires the broad mail.google.com scope.
+ */
+export async function emptyGmailTrash(
+  onProgress?: (done: number, total: number) => void
+): Promise<number> {
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+  do {
+    const page = await listMessageIds("in:trash", pageToken, 500);
+    ids.push(...page.ids);
+    pageToken = page.nextPageToken;
+  } while (pageToken);
+
+  const CHUNK = 1000; // batchDelete accepts up to 1000 ids per call
+  let done = 0;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const part = ids.slice(i, i + CHUNK);
+    await batchDelete(part);
+    done += part.length;
+    onProgress?.(done, ids.length);
+  }
+  return ids.length;
+}
