@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Wand2, Loader2, Check, FolderTree, FileText } from "lucide-react";
+import { Wand2, Loader2, Check, FolderTree } from "lucide-react";
 import { useDriveStore } from "../store/drive";
 import { getRootId, createFolder, moveFile } from "../lib/driveClient";
 import { buildPlan } from "../lib/organize";
 import { Card } from "./Card";
 import ProgressBar from "./ProgressBar";
+import Thumb from "./Thumb";
 
 /**
  * One-click auto-organize: groups top-level folders into tidy categories,
@@ -140,8 +141,8 @@ export default function OrganizePanel({ onDone }: { onDone: () => void }) {
                 </li>
               ))}
               {g.files.map((f) => (
-                <li key={f.id} className="flex items-center gap-1.5 truncate text-slate-500">
-                  <FileText className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                <li key={f.id} className="flex items-center gap-2 truncate text-slate-500">
+                  <Thumb file={f} size="sm" />
                   <span className="truncate">{f.name}</span>
                 </li>
               ))}
