@@ -16,6 +16,7 @@ import { formatBytes } from "../lib/sizeEstimator";
 import { Card, StatCard } from "./Card";
 import Modal from "./Modal";
 import ProgressBar from "./ProgressBar";
+import OrganizePanel from "./OrganizePanel";
 
 export default function DriveCenter() {
   const drive = useDriveScan();
@@ -187,6 +188,9 @@ export default function DriveCenter() {
           </button>
         </div>
       </div>
+
+      {/* One-click auto-organize */}
+      <OrganizePanel onDone={() => drive.scan()} />
 
       {/* Duplicates */}
       {duplicates.length > 0 && (

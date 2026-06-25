@@ -63,6 +63,12 @@ async function driveFetch<T>(path: string, init?: RequestInit): Promise<T> {
   });
 }
 
+/** The ID of "My Drive" root — needed to detect/relocate top-level folders. */
+export async function getRootId(): Promise<string> {
+  const data = await driveFetch<{ id: string }>("/files/root?fields=id");
+  return data.id;
+}
+
 /** Total account storage usage (shared across Drive/Gmail/Photos). */
 export async function getStorageQuota(): Promise<StorageQuota> {
   const data = await driveFetch<{ storageQuota: Record<string, string> }>(
