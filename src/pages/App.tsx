@@ -8,11 +8,13 @@ import {
   AlertCircle,
   Gauge,
   MailMinus,
+  HardDrive,
 } from "lucide-react";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import Dashboard from "../components/Dashboard";
 import UnsubscribeCenter from "../components/UnsubscribeCenter";
+import DriveCenter from "../components/DriveCenter";
 import UndoBanner from "../components/UndoBanner";
 import { useAuth } from "../store/auth";
 import {
@@ -129,10 +131,11 @@ export default function AppPage() {
 
 /** Signed-in shell: tab switcher between Dashboard and Unsubscribe + undo toast. */
 function AuthedApp() {
-  const [view, setView] = useState<"dashboard" | "unsubscribe">("dashboard");
+  const [view, setView] = useState<"dashboard" | "unsubscribe" | "drive">("dashboard");
   const tabs = [
     { id: "dashboard" as const, label: "Dashboard", icon: Gauge },
     { id: "unsubscribe" as const, label: "Unsubscribe", icon: MailMinus },
+    { id: "drive" as const, label: "Drive", icon: HardDrive },
   ];
   return (
     <div>
@@ -155,7 +158,9 @@ function AuthedApp() {
         ))}
       </div>
 
-      {view === "dashboard" ? <Dashboard /> : <UnsubscribeCenter />}
+      {view === "dashboard" && <Dashboard />}
+      {view === "unsubscribe" && <UnsubscribeCenter />}
+      {view === "drive" && <DriveCenter />}
 
       {/* One undo toast for both views. */}
       <UndoBanner />

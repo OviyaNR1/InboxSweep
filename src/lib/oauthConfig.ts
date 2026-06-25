@@ -14,6 +14,8 @@ export const SCOPES = [
   "email",
   "profile",
   "https://www.googleapis.com/auth/gmail.modify",
+  // Drive scope: needed to move files between folders and trash them.
+  "https://www.googleapis.com/auth/drive",
 ].join(" ");
 
 // Serverless endpoints (same origin as the app).
