@@ -17,6 +17,7 @@ export const CATEGORIES: Category[] = [
   { key: "finance", label: "Finance", emoji: "🏦" },
   { key: "travel", label: "Travel", emoji: "✈️" },
   { key: "photos", label: "Photos & Videos", emoji: "📸" },
+  { key: "documents", label: "Documents", emoji: "📄" },
   { key: "personal", label: "Personal & Misc", emoji: "🏠" },
 ];
 
@@ -43,6 +44,9 @@ export function categorizeFolder(name: string): string | null {
   return null;
 }
 
+// MIME fragments that mark a file as a "document" for the catch-all bucket.
+const DOC_MIME = ["pdf", "word", "document", "spreadsheet", "presentation", "excel", "powerpoint", "csv", "text"];
+
 /** Categorize a loose file by type + filename. Photos/videos go to Photos. */
 export function categorizeFile(name: string, mimeType: string): string | null {
   if (mimeType.startsWith("image/") || mimeType.startsWith("video/")) return "photos";
@@ -50,7 +54,11 @@ export function categorizeFile(name: string, mimeType: string): string | null {
   for (const rule of RULES) {
     if (rule.keywords.some((k) => n.includes(k))) return rule.key;
   }
-  return null; // leave anything we can't confidently place
+  // Catch-all: any remaining document (PDF, Word, sheet…) goes to Documents,
+  // so nothing recognizable is left loose in the root.
+  const mt = mimeType.toLowerCase();
+  if (DOC_MIME.some((m) => mt.includes(m))) return "documents";
+  return null;
 }
 
 export interface OrganizePlan {
