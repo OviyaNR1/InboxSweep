@@ -138,18 +138,18 @@ function AuthedApp() {
     { id: "drive" as const, label: "Drive", icon: HardDrive },
   ];
   return (
-    <div>
-      <div className="mb-6 inline-flex rounded-xl border border-slate-200 p-1 dark:border-slate-800">
+    <div className="animate-fade-up">
+      <div className="mb-6 inline-flex gap-1 rounded-full border border-white/60 bg-white/70 p-1 shadow-soft backdrop-blur dark:border-white/10 dark:bg-slate-900/60">
         {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setView(t.id)}
             className={
-              "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition " +
+              "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition " +
               (view === t.id
-                ? "bg-brand-600 text-white"
-                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800")
+                ? "bg-gradient-to-r from-brand-600 to-grape-600 text-white shadow-soft"
+                : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800")
             }
           >
             <t.icon className="h-4 w-4" />
@@ -158,9 +158,11 @@ function AuthedApp() {
         ))}
       </div>
 
-      {view === "dashboard" && <Dashboard />}
-      {view === "unsubscribe" && <UnsubscribeCenter />}
-      {view === "drive" && <DriveCenter />}
+      <div key={view} className="animate-fade-up">
+        {view === "dashboard" && <Dashboard />}
+        {view === "unsubscribe" && <UnsubscribeCenter />}
+        {view === "drive" && <DriveCenter />}
+      </div>
 
       {/* One undo toast for both views. */}
       <UndoBanner />

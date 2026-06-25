@@ -181,12 +181,19 @@ export default function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
+          accent="brand"
           label="Scanned size (est.)"
           value={formatBytes(agg.totalBytes)}
           sub={`${agg.scanned.toLocaleString()} emails`}
         />
-        <StatCard label="Top senders" value={agg.senders.length.toLocaleString()} sub="by storage" />
         <StatCard
+          accent="grape"
+          label="Top senders"
+          value={agg.senders.length.toLocaleString()}
+          sub="by storage"
+        />
+        <StatCard
+          accent="amber"
           label="Older than 1 year"
           value={formatBytes(agg.ageBuckets[0].bytes)}
           sub={`${agg.ageBuckets[0].count.toLocaleString()} emails`}

@@ -6,14 +6,22 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Friendly indigo/violet primary — warmer than a flat corporate blue.
         brand: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
+          50: "#eef2ff",
+          100: "#e0e7ff",
+          200: "#c7d2fe",
+          300: "#a5b4fc",
+          400: "#818cf8",
+          500: "#6366f1",
+          600: "#4f46e5",
+          700: "#4338ca",
+        },
+        // Warm secondary accent used in gradients/illustrations.
+        grape: {
+          400: "#c084fc",
+          500: "#a855f7",
+          600: "#9333ea",
         },
       },
       fontFamily: {
@@ -26,6 +34,33 @@ export default {
           "Roboto",
           "sans-serif",
         ],
+      },
+      borderRadius: {
+        "4xl": "2rem",
+      },
+      boxShadow: {
+        soft: "0 12px 32px -12px rgba(79, 70, 229, 0.22)",
+        "soft-lg": "0 24px 60px -20px rgba(79, 70, 229, 0.30)",
+      },
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        pop: {
+          "0%": { transform: "scale(0.96)" },
+          "60%": { transform: "scale(1.02)" },
+          "100%": { transform: "scale(1)" },
+        },
+      },
+      animation: {
+        float: "float 6s ease-in-out infinite",
+        "fade-up": "fade-up 0.4s ease-out both",
+        pop: "pop 0.25s ease-out both",
       },
     },
   },

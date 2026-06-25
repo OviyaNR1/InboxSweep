@@ -12,15 +12,50 @@ body,
   height: 100%;
 }
 
+/* Friendly, softly-colorful page backdrop (light + dark). */
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply text-slate-900 antialiased;
+  background:
+    radial-gradient(1100px 520px at 12% -8%, #e0e7ff 0%, transparent 55%),
+    radial-gradient(1000px 520px at 100% 0%, #fae8ff 0%, transparent 50%),
+    radial-gradient(900px 600px at 50% 110%, #ffe4e6 0%, transparent 55%),
+    #f8fafc;
+  background-attachment: fixed;
 }
 
 .dark body {
-  @apply bg-slate-950 text-slate-100;
+  @apply text-slate-100;
+  background:
+    radial-gradient(1100px 520px at 12% -8%, rgba(99, 102, 241, 0.18) 0%, transparent 55%),
+    radial-gradient(1000px 520px at 100% 0%, rgba(168, 85, 247, 0.16) 0%, transparent 50%),
+    radial-gradient(900px 600px at 50% 110%, rgba(244, 63, 94, 0.12) 0%, transparent 55%),
+    #0b1020;
+  background-attachment: fixed;
 }
 
 /* Visible focus ring for keyboard users (accessibility). */
 :focus-visible {
   @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
+}
+
+@layer components {
+  /* Gradient wordmark / headline accent. */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-600 via-grape-500 to-rose-500 bg-clip-text text-transparent;
+  }
+
+  /* Primary action button — soft gradient, rounded, gentle lift on hover. */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-grape-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:shadow-soft-lg hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Secondary / ghost button. */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-medium text-slate-700 backdrop-blur transition hover:bg-white dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 dark:hover:bg-slate-800;
+  }
+
+  /* Frosted card surface. */
+  .card-surface {
+    @apply rounded-4xl border border-white/60 bg-white/80 shadow-soft backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/70;
+  }
 }

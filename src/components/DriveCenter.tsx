@@ -163,11 +163,13 @@ export default function DriveCenter() {
       {/* Storage overview */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
+          accent="sky"
           label="Drive usage"
           value={q ? formatBytes(q.usageInDrive) : "—"}
           sub={q ? `of ${formatBytes(q.limit)} total account` : undefined}
         />
         <StatCard
+          accent="amber"
           label="Reclaimable from duplicates"
           value={formatBytes(dupWaste)}
           sub={`${duplicates.length} duplicate sets`}

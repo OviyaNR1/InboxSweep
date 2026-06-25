@@ -18,10 +18,7 @@ function ConnectButton({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={() => beginSignIn()}
-      className={
-        "inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-500 " +
-        className
-      }
+      className={"btn-primary px-6 py-3 text-base " + className}
     >
       {/* Inline Google "G" so we don't depend on an external asset. */}
       <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -105,14 +102,17 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pb-10 pt-8 sm:pt-16">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-600/10 dark:text-brand-400">
+      <section className="relative mx-auto max-w-6xl overflow-hidden px-6 pb-10 pt-8 sm:pt-16">
+        {/* floating gradient blobs */}
+        <div className="pointer-events-none absolute -left-16 top-0 h-64 w-64 rounded-full bg-gradient-to-br from-brand-300 to-grape-300 opacity-40 blur-3xl animate-float dark:opacity-20" />
+        <div className="pointer-events-none absolute -right-10 top-10 h-72 w-72 rounded-full bg-gradient-to-br from-rose-300 to-amber-200 opacity-40 blur-3xl animate-float dark:opacity-20" style={{ animationDelay: "2s" }} />
+        <div className="relative mx-auto max-w-3xl text-center animate-fade-up">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-1 text-sm font-semibold text-brand-700 shadow-soft backdrop-blur dark:border-white/10 dark:bg-slate-900/60 dark:text-brand-300">
             <Sparkle /> Free up your Gmail in minutes
           </span>
-          <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-5xl">
-            Reclaim your Gmail storage
-            <span className="block text-brand-600">without touching settings</span>
+          <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-6xl">
+            Reclaim your storage
+            <span className="block gradient-text pb-1">without the busywork</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
             InboxSweep shows you exactly what's filling up your inbox, then helps
@@ -131,20 +131,29 @@ export default function Landing() {
       {/* Feature cards */}
       <section className="mx-auto max-w-6xl px-6 py-12">
         <div className="grid gap-6 sm:grid-cols-3">
-          {features.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-            >
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-600/10">
-                <f.icon className="h-6 w-6" />
-              </span>
-              <h3 className="mt-4 text-lg font-semibold">{f.title}</h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                {f.body}
-              </p>
-            </div>
-          ))}
+          {features.map((f, i) => {
+            const tints = [
+              "from-brand-500 to-grape-500",
+              "from-rose-500 to-pink-500",
+              "from-emerald-500 to-teal-500",
+            ];
+            return (
+              <div
+                key={f.title}
+                className="card-surface p-6 transition hover:-translate-y-1 hover:shadow-soft-lg"
+              >
+                <span
+                  className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${tints[i % tints.length]} text-white shadow-soft`}
+                >
+                  <f.icon className="h-6 w-6" />
+                </span>
+                <h3 className="mt-4 text-lg font-semibold">{f.title}</h3>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                  {f.body}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
