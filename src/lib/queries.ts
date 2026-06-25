@@ -12,6 +12,27 @@ export interface CleanupRecipe {
 /** One-click cleanup recipes shown on the dashboard (Milestone 5 runs them). */
 export const RECIPES: CleanupRecipe[] = [
   {
+    id: "all-promos",
+    title: "All Promotions",
+    description: "Every promotional email — deals, offers, and marketing.",
+    query: "category:promotions",
+    tone: "promo",
+  },
+  {
+    id: "all-social",
+    title: "All Social",
+    description: "Every social-network notification (likes, follows, tags).",
+    query: "category:social",
+    tone: "social",
+  },
+  {
+    id: "all-forums",
+    title: "All Forums",
+    description: "Mailing lists and group/forum messages.",
+    query: "category:forums",
+    tone: "social",
+  },
+  {
     id: "promos-1y",
     title: "Promotions older than 1 year",
     description: "Old marketing and deal emails you'll never reopen.",
