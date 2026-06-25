@@ -17,6 +17,8 @@ export interface DriveFile {
   modifiedTime: number;
   parents: string[];
   webViewLink?: string;
+  thumbnailLink?: string; // preview URL (images, video, PDF, etc.)
+  iconLink?: string; // Drive's per-type icon, fallback when no thumbnail
 }
 
 export interface DriveFolder {
@@ -86,7 +88,7 @@ export async function listFilesBySize(
   const files: DriveFile[] = [];
   let pageToken: string | undefined;
   const fields =
-    "nextPageToken,files(id,name,size,quotaBytesUsed,mimeType,md5Checksum,modifiedTime,parents,webViewLink)";
+    "nextPageToken,files(id,name,size,quotaBytesUsed,mimeType,md5Checksum,modifiedTime,parents,webViewLink,thumbnailLink,iconLink)";
   const q =
     "'me' in owners and trashed = false and mimeType != 'application/vnd.google-apps.folder'";
 
@@ -114,6 +116,8 @@ export async function listFilesBySize(
         modifiedTime: f.modifiedTime ? Date.parse(f.modifiedTime) : 0,
         parents: (f.parents as unknown as string[]) ?? [],
         webViewLink: f.webViewLink,
+        thumbnailLink: f.thumbnailLink,
+        iconLink: f.iconLink,
       });
     }
     onProgress?.(files.length);

@@ -8,9 +8,10 @@ import {
   FolderInput,
   RefreshCw,
   Flame,
+  File as FileIcon,
 } from "lucide-react";
 import { useDriveScan } from "../hooks/useDriveScan";
-import { findDuplicates, moveFile } from "../lib/driveClient";
+import { findDuplicates, moveFile, type DriveFile } from "../lib/driveClient";
 import { formatBytes } from "../lib/sizeEstimator";
 import { Card, StatCard } from "./Card";
 import Modal from "./Modal";
@@ -234,6 +235,7 @@ export default function DriveCenter() {
                 onChange={() => toggle(f.id)}
                 className="h-4 w-4 rounded border-slate-300 text-brand-600"
               />
+              <Thumb file={f} />
               <div className="min-w-0 flex-1">
                 <a
                   href={f.webViewLink}
@@ -335,6 +337,29 @@ export default function DriveCenter() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Small file preview: Drive thumbnail with an icon fallback. */
+function Thumb({ file }: { file: DriveFile }) {
+  const [broken, setBroken] = useState(false);
+  const url = file.thumbnailLink;
+  if (url && !broken) {
+    return (
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setBroken(true)}
+        className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-slate-200 dark:ring-slate-700"
+      />
+    );
+  }
+  return (
+    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400 dark:bg-slate-800">
+      <FileIcon className="h-5 w-5" />
+    </span>
   );
 }
 
