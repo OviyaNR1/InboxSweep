@@ -10,7 +10,7 @@ import {
   Flame,
 } from "lucide-react";
 import { useDriveScan } from "../hooks/useDriveScan";
-import { findDuplicates, moveFile, type DriveFile } from "../lib/driveClient";
+import { findDuplicates, moveFile } from "../lib/driveClient";
 import { formatBytes } from "../lib/sizeEstimator";
 import { Card, StatCard } from "./Card";
 import Modal from "./Modal";
