@@ -8,6 +8,8 @@ import {
   FolderInput,
   RefreshCw,
   Flame,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { useDriveScan } from "../hooks/useDriveScan";
 import { findDuplicates, moveFile } from "../lib/driveClient";
@@ -230,37 +232,65 @@ export default function DriveCenter() {
         </Card>
       )}
 
-      {/* Biggest files */}
+      {/* Biggest files — card grid for fast visual selection */}
       <Card title="Biggest files">
-        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-          {drive.files.slice(0, 40).map((f) => (
-            <li key={f.id} className="flex items-center gap-3 py-2.5">
-              <input
-                type="checkbox"
-                checked={selected.has(f.id)}
-                onChange={() => toggle(f.id)}
-                className="h-4 w-4 rounded border-slate-300 text-brand-600"
-              />
-              <Thumb file={f} />
-              <div className="min-w-0 flex-1">
-                <a
-                  href={f.webViewLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block truncate text-sm font-medium text-slate-900 hover:text-brand-600 dark:text-white"
-                >
-                  {f.name}
-                </a>
-                <div className="truncate text-xs text-slate-500 dark:text-slate-400">
-                  {f.mimeType.split(/[/.]/).pop()} · {new Date(f.modifiedTime).toLocaleDateString()}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {drive.files.slice(0, 40).map((f) => {
+            const isSel = selected.has(f.id);
+            return (
+              <div
+                key={f.id}
+                onClick={() => toggle(f.id)}
+                className={
+                  "group relative cursor-pointer overflow-hidden rounded-2xl border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft dark:bg-slate-900 " +
+                  (isSel
+                    ? "border-brand-500 ring-2 ring-brand-500"
+                    : "border-slate-200 dark:border-slate-800")
+                }
+              >
+                {/* cover */}
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                  <Thumb file={f} cover />
+                  {/* selection check */}
+                  <span
+                    className={
+                      "absolute left-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border-2 transition " +
+                      (isSel
+                        ? "border-brand-600 bg-brand-600 text-white"
+                        : "border-white/80 bg-black/20 text-transparent group-hover:text-white/70")
+                    }
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                  {/* size badge */}
+                  <span className="absolute bottom-2 right-2 rounded-full bg-black/65 px-2 py-0.5 text-xs font-semibold text-white">
+                    {formatBytes(f.size)}
+                  </span>
+                  {/* open in Drive */}
+                  <a
+                    href={f.webViewLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Open in Drive"
+                    className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition hover:bg-black/70 group-hover:opacity-100"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+                {/* meta */}
+                <div className="p-2.5">
+                  <div className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                    {f.name}
+                  </div>
+                  <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                    {f.mimeType.split(/[/.]/).pop()} · {new Date(f.modifiedTime).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
-              <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-700 dark:text-slate-200">
-                {formatBytes(f.size)}
-              </span>
-            </li>
-          ))}
-        </ul>
+            );
+          })}
+        </div>
       </Card>
 
       {/* Sticky action bar */}
