@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 /** Accessible modal shell: backdrop, Escape-to-close, scroll lock, focus ring. */
@@ -28,7 +29,8 @@ export default function Modal({
 
   if (!open) return null;
 
-  return (
+  // Portal to <body> so the modal escapes any transformed/overflow ancestor.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
@@ -56,6 +58,7 @@ export default function Modal({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

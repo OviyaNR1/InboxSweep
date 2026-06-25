@@ -280,11 +280,13 @@ export default function DriveCenter() {
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
               >
                 <option value="">Move to folder…</option>
-                {drive.folders.map((fo) => (
-                  <option key={fo.id} value={fo.id}>
-                    {fo.name}
-                  </option>
-                ))}
+                {[...drive.folders]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((fo) => (
+                    <option key={fo.id} value={fo.id}>
+                      {fo.name}
+                    </option>
+                  ))}
               </select>
               <button
                 onClick={moveSelected}
