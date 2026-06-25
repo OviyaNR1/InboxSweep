@@ -17,6 +17,8 @@ export class GmailApiError extends Error {
 const RETRYABLE_REASONS = new Set([
   "rateLimitExceeded",
   "userRateLimitExceeded",
+  "quotaExceeded",
+  "dailyLimitExceeded",
   "backendError",
   "internalError",
 ]);
@@ -27,6 +29,9 @@ function isRetryable(err: unknown): boolean {
     if (err.status >= 500) return true;
     if (err.status === 403 && err.reason && RETRYABLE_REASONS.has(err.reason))
       return true;
+    // Some quota errors arrive as 403/400 with the limit described only in the
+    // message — retry those too rather than crashing the scan.
+    if (/quota exceeded|rate limit|rateLimit/i.test(err.message)) return true;
   }
   // Network blips (fetch throws TypeError) are worth one retry too.
   if (err instanceof TypeError) return true;
@@ -46,7 +51,7 @@ export async function withBackoff<T>(
   fn: () => Promise<T>,
   opts: BackoffOptions = {}
 ): Promise<T> {
-  const { maxRetries = 6, baseDelayMs = 400, maxDelayMs = 20_000 } = opts;
+  const { maxRetries = 8, baseDelayMs = 600, maxDelayMs = 32_000 } = opts;
   let attempt = 0;
   // eslint-disable-next-line no-constant-condition
   while (true) {

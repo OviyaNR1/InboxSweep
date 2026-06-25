@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useDriveScan } from "../hooks/useDriveScan";
 import { findDuplicates, moveFile } from "../lib/driveClient";
+import { CATEGORIES } from "../lib/organize";
 import { formatBytes } from "../lib/sizeEstimator";
 import { Card, StatCard } from "./Card";
 import Modal from "./Modal";
@@ -310,13 +311,34 @@ export default function DriveCenter() {
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
               >
                 <option value="">Move to folder…</option>
-                {[...drive.folders]
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((fo) => (
-                    <option key={fo.id} value={fo.id}>
-                      {fo.name}
-                    </option>
-                  ))}
+                {(() => {
+                  const labels = new Set(CATEGORIES.map((c) => c.label.toLowerCase()));
+                  const sorted = [...drive.folders].sort((a, b) =>
+                    a.name.localeCompare(b.name)
+                  );
+                  const suggested = sorted.filter((f) => labels.has(f.name.toLowerCase()));
+                  const others = sorted.filter((f) => !labels.has(f.name.toLowerCase()));
+                  return (
+                    <>
+                      {suggested.length > 0 && (
+                        <optgroup label="Suggested">
+                          {suggested.map((fo) => (
+                            <option key={fo.id} value={fo.id}>
+                              {fo.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      <optgroup label="All folders">
+                        {others.map((fo) => (
+                          <option key={fo.id} value={fo.id}>
+                            {fo.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </>
+                  );
+                })()}
               </select>
               <button
                 onClick={moveSelected}

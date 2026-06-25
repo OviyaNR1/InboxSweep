@@ -143,7 +143,7 @@ export async function getMessageMetadata(id: string): Promise<MessageMeta> {
 export async function getManyMetadata(
   ids: string[],
   onProgress?: (done: number, total: number) => void,
-  concurrency = 18
+  concurrency = 8
 ): Promise<MessageMeta[]> {
   return mapLimit(
     ids,

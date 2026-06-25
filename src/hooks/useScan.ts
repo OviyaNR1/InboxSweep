@@ -56,9 +56,12 @@ export function useScan() {
         useScanStore.getState().setStatus("scanning");
 
         // Phase 2 — fetch metadata with bounded concurrency + progress.
+        // Gmail allows ~250 quota units/user/sec and metadata.get costs ~5,
+        // so keep concurrency low enough to stay well under the ceiling even
+        // on a deep scan. Backoff handles any remaining 429s.
         const messages = await mapLimit<string, MessageMeta>(
           capped,
-          18,
+          8,
           (id) => {
             if (cancelRef.current) throw new ScanCancelled();
             return getMessageMetadata(id);
