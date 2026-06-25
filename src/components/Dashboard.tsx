@@ -18,7 +18,6 @@ import LargestEmails from "./LargestEmails";
 import CleanupRecipes from "./CleanupRecipes";
 import SearchBar from "./SearchBar";
 import ReviewModal, { type ReviewResult } from "./ReviewModal";
-import UndoBanner from "./UndoBanner";
 
 const DEPTHS = [
   { label: "Quick", cap: 1000, hint: "~1 min" },
@@ -241,7 +240,6 @@ export default function Dashboard() {
         query={review?.query ?? ""}
         onClose={onReviewClose}
       />
-      <UndoBanner />
       {notice && (
         <div className="fixed inset-x-0 top-6 z-50 flex justify-center px-4">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-lg dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">

@@ -1,9 +1,19 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, LogOut, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  LogOut,
+  ShieldCheck,
+  Loader2,
+  AlertCircle,
+  Gauge,
+  MailMinus,
+} from "lucide-react";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import Dashboard from "../components/Dashboard";
+import UnsubscribeCenter from "../components/UnsubscribeCenter";
+import UndoBanner from "../components/UndoBanner";
 import { useAuth } from "../store/auth";
 import {
   beginSignIn,
@@ -92,7 +102,7 @@ export default function AppPage() {
             </button>
           </Centered>
         ) : isAuthed ? (
-          <Dashboard />
+          <AuthedApp />
         ) : (
           <Centered>
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-600/10">
@@ -113,6 +123,42 @@ export default function AppPage() {
           </Centered>
         )}
       </main>
+    </div>
+  );
+}
+
+/** Signed-in shell: tab switcher between Dashboard and Unsubscribe + undo toast. */
+function AuthedApp() {
+  const [view, setView] = useState<"dashboard" | "unsubscribe">("dashboard");
+  const tabs = [
+    { id: "dashboard" as const, label: "Dashboard", icon: Gauge },
+    { id: "unsubscribe" as const, label: "Unsubscribe", icon: MailMinus },
+  ];
+  return (
+    <div>
+      <div className="mb-6 inline-flex rounded-xl border border-slate-200 p-1 dark:border-slate-800">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setView(t.id)}
+            className={
+              "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition " +
+              (view === t.id
+                ? "bg-brand-600 text-white"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800")
+            }
+          >
+            <t.icon className="h-4 w-4" />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {view === "dashboard" ? <Dashboard /> : <UnsubscribeCenter />}
+
+      {/* One undo toast for both views. */}
+      <UndoBanner />
     </div>
   );
 }

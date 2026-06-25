@@ -46,6 +46,9 @@ export interface SenderAgg {
   bytes: number;
   lastDate: number;
   hasUnsubscribe: boolean;
+  /** Raw unsubscribe headers from this sender's most recent message that had them. */
+  listUnsubscribe?: string;
+  listUnsubscribePost?: string;
 }
 
 export interface AgeBucket {
@@ -95,6 +98,11 @@ export function aggregate(messages: MessageMeta[], topN = 100): ScanAggregates {
     if (existing) {
       existing.count++;
       existing.bytes += m.sizeEstimate;
+      // Keep the unsubscribe headers from the newest message that carried them.
+      if (hasUnsub && m.date >= existing.lastDate) {
+        existing.listUnsubscribe = m.listUnsubscribe;
+        existing.listUnsubscribePost = m.listUnsubscribePost;
+      }
       existing.lastDate = Math.max(existing.lastDate, m.date);
       existing.hasUnsubscribe = existing.hasUnsubscribe || hasUnsub;
     } else {
@@ -105,6 +113,8 @@ export function aggregate(messages: MessageMeta[], topN = 100): ScanAggregates {
         bytes: m.sizeEstimate,
         lastDate: m.date,
         hasUnsubscribe: hasUnsub,
+        listUnsubscribe: hasUnsub ? m.listUnsubscribe : undefined,
+        listUnsubscribePost: hasUnsub ? m.listUnsubscribePost : undefined,
       });
     }
 
