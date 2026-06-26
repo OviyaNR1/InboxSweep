@@ -213,7 +213,7 @@ export default function GmailOrganize() {
                       try {
                         const labelId = await ensureLabel(
                           s.name || s.email || "Sender",
-                          labelsRef
+                          labelsRef.current
                         );
                         await applyLabelToQuery(senderQuery(s.email || s.name), [labelId]);
                         setRow(key, "labeled");
