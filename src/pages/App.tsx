@@ -9,12 +9,14 @@ import {
   Gauge,
   MailMinus,
   HardDrive,
+  Tags,
 } from "lucide-react";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import Dashboard from "../components/Dashboard";
 import UnsubscribeCenter from "../components/UnsubscribeCenter";
 import DriveCenter from "../components/DriveCenter";
+import GmailOrganize from "../components/GmailOrganize";
 import UndoBanner from "../components/UndoBanner";
 import { useAuth } from "../store/auth";
 import {
@@ -131,10 +133,13 @@ export default function AppPage() {
 
 /** Signed-in shell: tab switcher between Dashboard and Unsubscribe + undo toast. */
 function AuthedApp() {
-  const [view, setView] = useState<"dashboard" | "unsubscribe" | "drive">("dashboard");
+  const [view, setView] = useState<
+    "dashboard" | "unsubscribe" | "organize" | "drive"
+  >("dashboard");
   const tabs = [
     { id: "dashboard" as const, label: "Dashboard", icon: Gauge },
     { id: "unsubscribe" as const, label: "Unsubscribe", icon: MailMinus },
+    { id: "organize" as const, label: "Organize", icon: Tags },
     { id: "drive" as const, label: "Drive", icon: HardDrive },
   ];
   return (
@@ -161,6 +166,7 @@ function AuthedApp() {
       <div key={view} className="animate-fade-up">
         {view === "dashboard" && <Dashboard />}
         {view === "unsubscribe" && <UnsubscribeCenter />}
+        {view === "organize" && <GmailOrganize />}
         {view === "drive" && <DriveCenter />}
       </div>
 

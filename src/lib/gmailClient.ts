@@ -206,6 +206,83 @@ export async function getTrashCount(): Promise<number> {
   return countMessages("in:trash");
 }
 
+// ── Labels & filters (Gmail Organize) ────────────────────────────────────────
+
+export interface GmailLabel {
+  id: string;
+  name: string;
+  type?: string; // "system" | "user"
+}
+
+export async function listLabels(): Promise<GmailLabel[]> {
+  const data = await gapi<{ labels?: GmailLabel[] }>("/labels");
+  return data.labels ?? [];
+}
+
+export async function createLabel(name: string): Promise<GmailLabel> {
+  return gapi<GmailLabel>("/labels", {
+    method: "POST",
+    body: JSON.stringify({
+      name,
+      labelListVisibility: "labelShow",
+      messageListVisibility: "show",
+    }),
+  });
+}
+
+/** Return an existing label's id by name, creating it if missing. */
+export async function ensureLabel(name: string, existing: GmailLabel[]): Promise<string> {
+  const found = existing.find((l) => l.name.toLowerCase() === name.toLowerCase());
+  if (found) return found.id;
+  const created = await createLabel(name);
+  existing.push(created); // keep cache fresh for subsequent calls
+  return created.id;
+}
+
+/**
+ * Apply label changes to every message matching a query, in batches.
+ * Set removeLabelIds=["INBOX"] to also archive (declutter) them.
+ */
+export async function applyLabelToQuery(
+  query: string,
+  addLabelIds: string[],
+  removeLabelIds: string[] = [],
+  onProgress?: (done: number, total: number) => void,
+  cap = 10000
+): Promise<number> {
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+  do {
+    const page = await listMessageIds(query, pageToken, 500);
+    ids.push(...page.ids);
+    pageToken = page.nextPageToken;
+  } while (pageToken && ids.length < cap);
+
+  const CHUNK = 1000;
+  let done = 0;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const part = ids.slice(i, i + CHUNK);
+    await batchModify(part, addLabelIds, removeLabelIds);
+    done += part.length;
+    onProgress?.(done, ids.length);
+  }
+  return ids.length;
+}
+
+/**
+ * Create a Gmail filter so FUTURE mail is auto-sorted. Requires the
+ * gmail.settings.basic scope. `criteria.query` accepts Gmail search syntax.
+ */
+export async function createFilter(
+  criteria: { query?: string; from?: string },
+  action: { addLabelIds?: string[]; removeLabelIds?: string[] }
+): Promise<void> {
+  await gapi<void>("/settings/filters", {
+    method: "POST",
+    body: JSON.stringify({ criteria, action }),
+  });
+}
+
 /**
  * Empty Gmail Trash by permanently deleting everything in it — THIS is what
  * actually frees storage. Lists all trashed IDs then batchDeletes in chunks.

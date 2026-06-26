@@ -17,6 +17,8 @@ export const SCOPES = [
   // "delete forever") which is what actually reclaims storage. Supersedes
   // gmail.modify (read/trash/label).
   "https://mail.google.com/",
+  // Manage filters — needed to auto-sort future mail (create Gmail filters).
+  "https://www.googleapis.com/auth/gmail.settings.basic",
   // Drive scope: needed to move files between folders and trash them.
   "https://www.googleapis.com/auth/drive",
 ].join(" ");
